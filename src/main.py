@@ -68,7 +68,7 @@ async def play(context):
     if len(song_queue) == 1 and not connection.is_playing():
         first_song = song_queue.pop()
         await context.send("Now playing: {0}".format(first_song))
-        connection.play(discord.FFmpegPCMAudio(source = first_song), after = lambda e: get_next_song(context))
+        connection.play(discord.FFmpegPCMAudio(source = first_song), after = await get_next_song(context))
 
 # COMMAND TO PRINT OUT CURRENT QUEUE # 
 @bot.command()
@@ -130,7 +130,7 @@ async def get_next_song(context):
     if len(queue) > 0:
         next_song = song_queue.pop()
         await context.send("Now playing: {0}".format(next_song))
-        connection.play(discord.FFmpegPCMAudio(source = next_song), after = lambda e: get_next_song(context))
+        connection.play(discord.FFmpegPCMAudio(source = next_song), after = await get_next_song(context))
     else: 
         await asyncio.sleep(10)
         if not connection.is_playing():
