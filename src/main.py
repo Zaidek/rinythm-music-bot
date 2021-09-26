@@ -33,6 +33,8 @@ ffmpeg_options = {
     'options': '-x'
 }
 
+connection = None
+
 # COMMANDS #
 
 # COMMAND TO PLAY OR QUEUE GIVEN SONG #
