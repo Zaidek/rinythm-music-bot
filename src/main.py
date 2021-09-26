@@ -68,7 +68,7 @@ async def play(context):
     if len(song_queue) == 1 and not connection.is_playing():
         first_song = song_queue.pop()
         await context.send("Now playing: {0}".format(first_song))
-        connection.play(discord.FFmpegPCMAudio(source = first_song), after = lambda e: await get_next_song(context))
+        connection.play(discord.FFmpegPCMAudio(source = first_song), after = lambda e: get_next_song(context))
 
 # COMMAND TO PRINT OUT CURRENT QUEUE # 
 @bot.command()
@@ -80,6 +80,7 @@ async def queue(context):
 # COMMAND TO SKIP CURRENT SONG PLAYING # 
 @bot.command()
 async def skip(context):
+    global connection
     if not connection.is_playing:
         context.send("There is currently no song playing to skip")
         return
@@ -89,6 +90,7 @@ async def skip(context):
 # COMMAND TO PAUSE CURRENT SONG PLAYING #
 @bot.command()
 async def pause(context):
+    global connection
     if not connection.is_playing:
         context.send("There is currently no song playing to pause")
         return
@@ -97,6 +99,7 @@ async def pause(context):
 # COMMAND TO RESUME ANY CURRENTLY PAUSED SONG # 
 @bot.command()
 async def resume(context):
+    global connection
     if connection.is_paused:
         context.send("There is currently no paused song to resume")
         return
@@ -122,10 +125,12 @@ async def on_message(message):
 
 # FUNCTION TO FETCH AND PLAY NEXT SONG IN QUEUE #
 async def get_next_song(context):
+    global connection
+
     if len(queue) > 0:
         next_song = song_queue.pop()
         await context.send("Now playing: {0}".format(next_song))
-        connection.play(discord.FFmpegPCMAudio(source = next_song), after = lambda e: await get_next_song(context))
+        connection.play(discord.FFmpegPCMAudio(source = next_song), after = lambda e: get_next_song(context))
     else: 
         await asyncio.sleep(10)
         if not connection.is_playing():
