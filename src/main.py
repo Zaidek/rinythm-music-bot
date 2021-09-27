@@ -22,6 +22,7 @@ youtube_download_options = {
     'ignoreerrors': False,
     'no_warnings': True,
     'default_search': 'auto',
+    'outtmpl': '%(id)s.%(ext)s',
     'postprocessors': [{
         'key': 'FFmpegExtractAudio',
         'preferredcodec': 'mp3',
@@ -61,21 +62,22 @@ async def play(context):
     message_url = message.content.strip('RINplay ')
 
     # APPEND TO QUEUE #
-    filename = extract_url_data(message_url)
-    song_queue.append(filename)
+    (filename, title) = extract_url_data(message_url)
+    song_queue.append((filename, title))
 
     # PLAY FIRST SONG #
     if len(song_queue) == 1 and not connection.is_playing():
         first_song = song_queue.pop()
-        await context.send("Now playing: {0}".format(first_song))
-        connection.play(discord.FFmpegPCMAudio(source = first_song), after = await get_next_song(context))
+        await context.send("Now playing: {0}".format(first_song[1]))
+        connection.play(discord.FFmpegPCMAudio(source = first_song[0]), after = get_next_song)
+
 
 # COMMAND TO PRINT OUT CURRENT QUEUE # 
 @bot.command()
 async def queue(context):
     text_channel = context.channel
     for index in range(len(song_queue)):
-        await text_channel.send("{0} - {1}".format(index, queue[index]))
+        await text_channel.send("{0} - {1}".format((index+1), song_queue[index][1]))
 
 # COMMAND TO SKIP CURRENT SONG PLAYING # 
 @bot.command()
@@ -84,8 +86,9 @@ async def skip(context):
     if not connection.is_playing:
         context.send("There is currently no song playing to skip")
         return
-    connection.stop()    
-    await get_next_song(context)
+    connection.stop()
+    await context.send("Skipping song...")    
+    await get_next_song()
 
 # COMMAND TO PAUSE CURRENT SONG PLAYING #
 @bot.command()
@@ -124,28 +127,31 @@ async def on_message(message):
 # HELPER FUNCTIONS #
 
 # FUNCTION TO FETCH AND PLAY NEXT SONG IN QUEUE #
-async def get_next_song(context):
+async def get_next_song():
     global connection
 
-    if len(queue) > 0:
+    print("next song is playing")
+
+    if len(song_queue) > 0:
         next_song = song_queue.pop()
-        await context.send("Now playing: {0}".format(next_song))
-        connection.play(discord.FFmpegPCMAudio(source = next_song), after = await get_next_song(context))
+        #await context.send("Now playing: {0}".format(next_song[1]))
+        connection.play(discord.FFmpegPCMAudio(source = next_song[0]), after = get_next_song)
     else: 
-        await asyncio.sleep(10)
+        await asyncio.sleep(120)
         if not connection.is_playing():
-            await asyncio.run_coroutine_threadsafe(connection.disconnect(), bot.loop)
-            await context.send("AFK for too long, bot disconnecting")
+            await connection.disconnect()
+            #await context.send("AFK for too long, bot disconnecting")
+            print("hello")
 
 # EXTRACTS INFO FROM GIVEN URL #
 def extract_url_data(url):
-
     with youtube_dl.YoutubeDL(youtube_download_options) as ydl:
         data = ydl.extract_info(url)
         if 'entires' in data:
             data = data['entries'][0]
-        filename = "{0}-{1}.mp3".format(data['title'], data['id'])
-    return filename
+        filename = "{0}.mp3".format(data['id'])
+        title = data['title']
+    return (filename, title)
 
 # CONNECTS AND SETS VOICE CHANNEL CONNECTION # 
 async def join_voice_channel(voice_channel, text_channel, guild):
