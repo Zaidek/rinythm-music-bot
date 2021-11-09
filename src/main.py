@@ -56,7 +56,7 @@ async def play(context):
         if voice_channel:
             await join_voice_channel(voice_channel, text_channel, guild)    
     except discord.errors.ClientException:
-        print("oh shit")
+        print("Client Exception has Occured")
 
     #GET URL #
     message_url = message.content.strip('RINplay ')
